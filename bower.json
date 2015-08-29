@@ -1,0 +1,32 @@
+{
+  "name": "ng-collection",
+  "version": "1.0.0",
+  "homepage": "https://github.com/onumossn/ng-collection",
+  "authors": [
+    "Mohammed Nauage <mohammed.nauage.gsa@gmail.com>"
+  ],
+  "description": "Simple DRY way of getting CRUD into angular views",
+  "main": [
+    "dist/*",
+  ],
+  "keywords": [
+    "angular",
+    "crud",
+    "view"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "=>1.3.x"
+  },
+  "devDependencies": {
+    "angular": "~1.3.x",
+    "angular-mocks": "~1.3.x"
+  }
+}
