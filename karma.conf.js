@@ -5,13 +5,13 @@ module.exports = function (config) {
     browsers: ['Chrome', 'Firefox', 'PhantomJS'],
     files: [
       'bower_components/angular/angular.js',
-      'bower_components/angular/angular-mocks.js',
-      'dist/ng-collection.js',
-      'test/**/*.js'
+      'bower_components/angular-mocks/angular-mocks.js',
+      'src/ng-collection.js',
+      'tests/**/*.js'
     ],
     captureTimeout: 60000,
     colors: true,
-    logLevel: config.LOG_INFO,
+    logLevel: config.LOG_DEBUG,
     port: 9876,
     plugins: [
       'karma-jasmine',
@@ -28,7 +28,7 @@ module.exports = function (config) {
       dir: 'coverage/'
     },
     preprocessors: {
-      'dist/ng-collection.js': ['coverage']
+      'src/ng-collection.js': ['coverage']
     },
     reporters: ['progress', 'coverage']
   });

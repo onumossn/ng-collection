@@ -6,7 +6,7 @@ angular.module('ngCollection', [])
       idKey: 'id'
     };
 
-    this.$get = function($q, $http, $filter, $cacheFactory, $injector, ResourceLibrary) {
+    this.$get = function($q, $http, $filter, $cacheFactory, $injector, $resourceLibrary) {
       var cache = $cacheFactory('ng-collection'),
         defaults = this.defaults,
         AuthService = authServiceName ? $injector.get(authServiceName) : {
@@ -15,7 +15,7 @@ angular.module('ngCollection', [])
 
       function CollectionFactory(type, params) {
         this.meta = {
-          url: ResourceLibrary.get(type),
+          url: $resourceLibrary.get(type),
           params: angular.copy(params)          
         };
         this.data = { collection: [] };
@@ -24,7 +24,7 @@ angular.module('ngCollection', [])
       CollectionFactory.prototype.get = function(params) {
         var self = this,
           defer = $q.defer(),
-          url = params.id ? buildEntityUrl(self.meta.url, params.id) : self.meta.url;
+          url = params.id ? getEntityUrl(self.meta.url, params.id) : self.meta.url;
         
         params = angular.copy(params || {});
 
@@ -53,10 +53,10 @@ angular.module('ngCollection', [])
       CollectionFactory.prototype.save = function(entity) {
         var self = this,
           defer = $q.defer(),
-          url = buildEntityUrl(self.meta.url, entity[defaults.idKey]);
+          url = getEntityUrl(self.meta.url, entity[defaults.idKey]);
         AuthService.authenticate().then(function() {
           if(entity[defaults.idKey]) {
-            var params = buildDynamicKeyObject(defaults.idKey, entity.id);
+            var params = getDynamicKeyObject(defaults.idKey, entity.id);
             $http.put(url, entity).then(function(data) {
               insertIntoCollection(self.data.collection, data);
               defer.resolve(angular.copy(data));
@@ -83,7 +83,7 @@ angular.module('ngCollection', [])
           defer = $q.defer();
 
         AuthService.authenticate().then(function() {
-          $http.delete(buildEntityUrl(self.meta.url, entity[defaults.idKey])).then(function() {
+          $http.delete(getEntityUrl(self.meta.url, entity[defaults.idKey])).then(function() {
             var original = findById(self.data.collection, entity[defaults.idKey]),
               index = self.data.collection.indexOf(original);
             self.data.collection.splice(index, 1);
@@ -98,7 +98,7 @@ angular.module('ngCollection', [])
         return defer.promise;
       };
 
-      function buildEntityUrl(url, id) { return url + '/' + id; }
+      function getEntityUrl(url, id) { return url + '/' + id; }
 
       //helper to insert entity into collection by either
       //extending currently existing entity in the collection
@@ -112,7 +112,7 @@ angular.module('ngCollection', [])
       }
 
       //helper for creating an object with a dynamic key value pair
-      function buildDynamicKeyObject(key, id) {
+      function getDynamicKeyObject(key, id) {
         var obj = {};
         obj[key] = id;
         return obj;
@@ -121,12 +121,12 @@ angular.module('ngCollection', [])
       //helper for finding first entity in a collection by id
       //however this is suboptimal
       function findById(collection, id) {
-        return $filter('filter')(self.data.collection, buildDynamicKeyObject(defaults.idKey, id))[0];
+        return $filter('filter')(self.data.collection, getDynamicKeyObject(defaults.idKey, id))[0];
       }
 
       //creates cache key based on type string
       //and params object converted into a string
-      function cacheKeyBuilder(args) {
+      function getCacheKey(args) {
         var params = '';
         angular.forEach(args[1], function(value, key) {
           params += (key + value);
@@ -135,7 +135,7 @@ angular.module('ngCollection', [])
       }
 
       return function(type, params) {
-        var key = cacheKeyBuilder(arguments),
+        var key = getCacheKey(arguments),
           inCache = cache.get(key);
 
         if(inCache) return inCache;
@@ -178,31 +178,31 @@ angular.module('ngCollection', [])
     };
   })
   .controller('ngCollectionCtrl', function($scope, $attrs, $parse, $collection) {
-    var collections = $parse($attrs.collection)($scope);
+    var collections = $parse($attrs.ngCollection)($scope);
 
     $scope.getEditCopy = angular.copy;
 
     angular.forEach(collections, function(collection) {
-      var resource = $collection(collection.resourceName, collection.params),
-        collectionName = camelCase(collection.resourceName);
+      var resource = $collection(collection.resource, collection.params),
+        collectionName = camelCase(collection.resource);
 
-      $scope[collectionName] = {
+      $scope[collectionName] = angular.extend({
         data: resource.data,
         save: function(entity, success, error) {
           resource.save(entity).then(function(data) {
             if (success) success(data);
-          }, function() {
-            if (error) error(err);
+          }, function(err) {
+            if (error) error(err);  
           });
         },
         remove: function(entity, success, error) {
           resource.remove(entity).then(function(data) {
             if (success) success(data);
-          }, function() {
+          }, function(err) {
             if (error) error(err);
           });
         }
-      };
+      }, $scope[collectionName]);
 
       resource.get();
     });
@@ -219,6 +219,6 @@ angular.module('ngCollection', [])
   .directive('ngCollection', function() {
     return {
       restrict: 'A',
-      controller: 'CollectionCtrl'
+      controller: 'ngCollectionCtrl'
     };
   });

@@ -49,14 +49,13 @@ module.exports = function (grunt) {
     },
     karma: {
       options: {
-        configFile: './karma.conf.js'
+        configFile: 'karma.conf.js'
       },
       dev: {
-        browsers: ['Chrome']
+        browsers: ['PhantomJS']
       },
       dist: {},
       min: {
-        browsers: ['Chrome', 'Firefox', 'PhantomJS'],
         options: {
           files: [
             'bower_components/angular/angular.js',
