@@ -1,13 +1,7 @@
 #ng-collection
 
-
-----------
-
-
 ## Status: In-Development
 
-
-----------
 
 ##<a name="install"></a> Install
 
@@ -17,9 +11,6 @@
 <script src="angular(.min).js"></script>
 <script src="ng-collection(.min).js"></script>
 ```
-
-
-----------
 
 
 ##<a name="usage"></a> Usage
@@ -39,7 +30,7 @@ html:
           <span>Todo:</span>
           <input type="text" name="todo" ng-model="todo.name" title="Todo" required/> 
         </label>
-        <button type="submit" ng-click="editForm.$valid todoResource.save(todoCopy, showConfirmation, showError)">Save</button>
+        <button type="submit" ng-click="editForm.$valid && todoResource.save(todoCopy, showConfirmation, showError)">Save</button>
       </form>
     </li>
   </ul>
