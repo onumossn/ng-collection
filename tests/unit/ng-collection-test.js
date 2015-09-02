@@ -78,6 +78,7 @@ describe('ngCollectionCtrl', function () {
   var $scope,
     $controller,
     $rootScope,
+    $q,
     $collection,
     mockAttrs = [ { resource: 'ASDF', params: { c: 'd' } },
       { resource: 'HelloBye', params: {} } ];
@@ -100,7 +101,8 @@ describe('ngCollectionCtrl', function () {
     });
   }));
 
-  beforeEach(inject(function(_$rootScope_, _$controller_, _$collection_) {
+  beforeEach(inject(function(_$rootScope_, _$controller_, _$q_, _$collection_) {
+    $q = _$q_;
     $controller = _$controller_;
     $rootScope = _$rootScope_;
     $collection = _$collection_;
@@ -115,46 +117,80 @@ describe('ngCollectionCtrl', function () {
     });
   }));
 
-  it('should add or extend a object with the name camelCase collection name on the scope for each collection', function() {
-    expect($scope.aSDF).toBeDefined();
-    expect($scope.helloBye).toBeDefined();
+  describe('initialization', function() {
+    it('should add or extend a object with the name camelCase collection name on the scope for each collection', function() {
+      expect($scope.aSDF).toBeDefined();
+      expect($scope.helloBye).toBeDefined();
+      expect($scope.aSDF).not.toBe($scope.helloBye);
+    });
+
+    it('should request initial collection', function() {
+      expect($collection('ASDF').get.calls.count()).toEqual(1);
+      expect($collection('HelloBye').get.calls.count()).toEqual(1);
+    });
+
+    it('should expose collection data, save, and remove', function() {
+      expect($scope.aSDF.data).toEqual(jasmine.any(Object));
+      expect($scope.aSDF.save).toEqual(jasmine.any(Function));
+      expect($scope.aSDF.remove).toEqual(jasmine.any(Function));
+      expect($scope.helloBye.data).toEqual(jasmine.any(Object));
+      expect($scope.helloBye.save).toEqual(jasmine.any(Function));
+      expect($scope.helloBye.remove).toEqual(jasmine.any(Function));
+      expect($scope.helloBye.data).not.toBe($scope.aSDF.data);
+      expect($scope.helloBye.save).not.toBe($scope.aSDF.save);
+      expect($scope.helloBye.remove).not.toBe($scope.aSDF.remove);
+    });
   });
 
-  it('should request initial collection', function() {
-    expect($collection('ASDF').get).toHaveBeenCalled();
-    expect($collection('HelloBye').get).toHaveBeenCalled();
-  });
+  describe('behavior', function() {
+    it('should call appropriate $collection function on save and remove', function() {
+      var entity = { test: 'a' };
+      $scope.aSDF.save(entity);
+      $scope.$digest();
+      expect($collection('ASDF').save).toHaveBeenCalledWith(entity);
 
-  it('should expose collection data, save, and remove', function() {
-    expect($scope.aSDF.data).toEqual(jasmine.any(Object));
-    expect($scope.aSDF.save).toEqual(jasmine.any(Function));
-    expect($scope.aSDF.remove).toEqual(jasmine.any(Function));
-    expect($scope.helloBye.data).toEqual(jasmine.any(Object));
-    expect($scope.helloBye.save).toEqual(jasmine.any(Function));
-    expect($scope.helloBye.remove).toEqual(jasmine.any(Function));
-  });
+      $scope.helloBye.save(entity);
+      $scope.$digest();
+      expect($collection('HelloBye').save).toHaveBeenCalledWith(entity);
 
-  it('should call appropriate $collection function on save and remove', function() {
-    var entity = { test: 'hi' };
-    $scope.aSDF.save(entity);
-    expect($collection('ASDF').save).toHaveBeenCalledWith(entity);
+      $scope.aSDF.remove(entity);
+      $scope.$digest();
+      expect($collection('ASDF').remove).toHaveBeenCalledWith(entity);
 
-    $scope.helloBye.save(entity);
-    expect($collection('HelloBye').save).toHaveBeenCalledWith(entity);
+      $scope.helloBye.remove(entity);
+      $scope.$digest();
+      expect($collection('HelloBye').remove).toHaveBeenCalledWith(entity);
+    });
 
-    $scope.aSDF.remove(entity);
-    expect($collection('ASDF').remove).toHaveBeenCalledWith(entity);
+    it('should accept success callbacks on save and remove', function() {
+      var entity = { test: 'a' },
+        success = jasmine.createSpy('success');
 
-    $scope.helloBye.remove(entity);
-    expect($collection('HelloBye').remove).toHaveBeenCalledWith(entity);
-  });
+      $scope.aSDF.save(entity, success);
+      $scope.$digest();
+      expect(success.calls.count()).toEqual(1);
 
-  it('should accept success callbacks on save and remove', function() {
+      $scope.aSDF.remove(entity, success);
+      $scope.$digest();
+      expect(success.calls.count()).toEqual(2);
+    });
 
-  });
+    it('should accept error callbacks on save and remove', function() {
+      var entity = { test: 'a' },
+        success = jasmine.createSpy('success'),
+        error = jasmine.createSpy('error');
 
-  it('should accept error callbacks on save and remove', function() {
+      $collection('ASDF').save.and.returnValue($q.reject(false))
+      $collection('ASDF').remove.and.returnValue($q.reject(false))
 
+      $scope.aSDF.save(entity, success, error);
+      $scope.$digest();
+      expect(error.calls.count()).toEqual(1);
+
+      $scope.aSDF.remove(entity, success, error);
+      $scope.$digest();
+      expect(error.calls.count()).toEqual(2);
+    });
   });
 
 });
