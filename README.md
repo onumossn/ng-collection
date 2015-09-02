@@ -4,9 +4,9 @@
 
 
 ##<a name="install"></a> Install
-
-* <a name="bower"></a>**Bower**: `bower install ng-collection --save`
-* <a name="npm"></a>**NPM**: `npm install ng-collection`
+* <a name="manual"></a>**Manual** (Better method on release): `download this repo`
+* <a name="bower"></a>**Bower** (TODO): `bower install ng-collection --save`
+* <a name="npm"></a>**NPM** (TODO): `npm install ng-collection`
 ```html
 <script src="angular(.min).js"></script>
 <script src="ng-collection(.min).js"></script>
