@@ -171,18 +171,12 @@ angular.module('ngCollection', [])
       $scope[collectionName] = angular.extend({
         data: resource.data,
         save: function(entity, success, error) {
-          resource.save(entity).then(function(data) {
-            if (success) success(data);
-          }, function(err) {
-            if (error) error(err);  
-          });
+          resource.save(entity)
+            .then(getPromiseHandler(success), getPromiseHandler(error));
         },
         remove: function(entity, success, error) {
-          resource.remove(entity).then(function(data) {
-            if (success) success(data);
-          }, function(err) {
-            if (error) error(err);
-          });
+          resource.remove(entity)
+            .then(getPromiseHandler(success), getPromiseHandler(error));
         }
       }, $scope[collectionName]);
 
@@ -196,6 +190,11 @@ angular.module('ngCollection', [])
           return index === 0 ? match.toLowerCase() : match.toUpperCase();
         });
     }
+
+    function getPromiseHandler(callback) {
+      return function(resp) { if (callback) callback(resp) };
+    }
+
   })
   .directive('ngCollection', function() {
     return {
