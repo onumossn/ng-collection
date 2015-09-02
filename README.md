@@ -23,9 +23,9 @@ html:
   <ul>
     <li ng-repeat="todo in todoResource.data.collection">
       <span>{{todo.title}}</span>
-      <button ng-click="todo.edit != todo.edit; todoCopy = getEditCopy(todo)"></button>
+      <button ng-click="todo.edit != todo.edit">Edit</button>
       <button ng-click="todoResource.remove(todo)">Remove</button>
-      <form ng-if="todo.edit" name="editForm">
+      <form ng-if="todo.edit" ng-init="todoCopy = getEditCopy(todo)" name="editForm">
         <label>
           <span>Todo:</span>
           <input type="text" name="todo" ng-model="todo.name" title="Todo" required/> 
