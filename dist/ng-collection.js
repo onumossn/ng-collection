@@ -192,7 +192,7 @@ angular.module('ngCollection', [])
           resource.save(entity).then(function(data) {
             if (success) success(data);
           }, function(err) {
-            if (error) error(err);
+            if (error) error(err);  
           });
         },
         remove: function(entity, success, error) {
@@ -211,7 +211,6 @@ angular.module('ngCollection', [])
     function camelCase(string) {
       return string.replace(/\./g, ' ')
         .replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
-          if (+match === 0) return '';
           return index === 0 ? match.toLowerCase() : match.toUpperCase();
         });
     }

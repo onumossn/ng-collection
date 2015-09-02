@@ -211,7 +211,6 @@ angular.module('ngCollection', [])
     function camelCase(string) {
       return string.replace(/\./g, ' ')
         .replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
-          if (+match === 0) return '';
           return index === 0 ? match.toLowerCase() : match.toUpperCase();
         });
     }
