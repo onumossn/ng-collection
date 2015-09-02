@@ -23,80 +23,62 @@ angular.module('ngCollection', [])
 
       CollectionFactory.prototype.get = function(params) {
         var self = this,
-          defer = $q.defer(),
           url = params.id ? getEntityUrl(self.meta.url, params.id) : self.meta.url;
         
         params = angular.copy(params || {});
 
         if (!params.id) angular.extend(params, self.meta.params);
 
-        AuthService.authenticate().then(function() {
-          $http.get(url, { params: params }).then(function(data) {
+        return AuthService.authenticate()
+          .then(function() {
+            return $http.get(url, { params: params });
+          }, quickReject)
+          .then(function(data) {
+            var promisedValue;
             if(params[defaults.idKey]) {
               insertIntoCollection(self.data.collection, data);
-              defer.resolve(angular.copy(data));
+              promisedValue = angular.copy(data);
             } else {
               self.data.collection = resp[defaults.collectionKey] || [];
-              defer.resolve(angular.copy(self.data.collection));
+              promisedValue = angular.copy(self.data.collection);
             }
-          }, function(err) {
-            defer.reject(err);
-          });
-        }, function(err) {
-          defer.reject(err);
-        });
-
-
-        return defer.promise;
+            return promisedValue;
+          }, quickReject);
       };
 
       CollectionFactory.prototype.save = function(entity) {
         var self = this,
-          defer = $q.defer(),
           url = getEntityUrl(self.meta.url, entity[defaults.idKey]);
-        AuthService.authenticate().then(function() {
-          if(entity[defaults.idKey]) {
-            var params = getDynamicKeyObject(defaults.idKey, entity.id);
-            $http.put(url, entity).then(function(data) {
-              insertIntoCollection(self.data.collection, data);
-              defer.resolve(angular.copy(data));
-            }, function(err) {
-              defer.reject(err);
-            });
-          } else {
-            $http.post(self.meta.url, entity).then(function(data) {
-              self.data.collection.push(data);
-              defer.resolve(angular.copy(data));
-            }, function(err) {
-              defer.reject(err);
-            });
-          }
-        }, function(err) {
-          defer.reject(err);
-        });
-
-        return defer.promise;
+        return AuthService.authenticate()
+          .then(function() {
+            var method = entity[defaults.idKey] ? 'put' : 'post';
+            return $http[method](url, entity);
+          }, quickReject)
+          .then(function(data) {
+            insertIntoCollection(self.data.collection, data);
+            return angular.copy(data);
+          }, quickReject);
       };
 
       CollectionFactory.prototype.remove = function(entity) {
-        var self = this,
-          defer = $q.defer();
+        var self = this;
 
-        AuthService.authenticate().then(function() {
-          $http.delete(getEntityUrl(self.meta.url, entity[defaults.idKey])).then(function() {
+        return AuthService.authenticate()
+          .then(function() {
+            return $http.delete(getEntityUrl(self.meta.url, entity[defaults.idKey]));
+          }, quickReject)
+          .then(function() {
+            //seems weird to find something you already have, but
+            //time has passed since the network request has been made
+            //and the data may have changed which means that the original
+            //no longer exists in the current collection
             var original = findById(self.data.collection, entity[defaults.idKey]),
               index = self.data.collection.indexOf(original);
             self.data.collection.splice(index, 1);
-            defer.resolve();
-          }, function(err) {
-            defer.reject(err);
-          });
-        }, function(err) {
-          defer.reject(err);
-        });
-
-        return defer.promise;
+          }, quickReject);
       };
+
+      function quickReject(err) { return $q.reject(err); }
 
       function getEntityUrl(url, id) { return url + '/' + id; }
 
