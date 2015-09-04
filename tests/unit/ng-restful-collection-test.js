@@ -50,25 +50,33 @@ describe('$collection', function () {
 /****************************************************************************/
 
 describe('$resourceLibrary', function () {
+  var $resourceLibrary;
 
-  beforeEach(inject(function() {
-
+  beforeEach(inject(function(_$resourceLibrary_) {
+    $resourceLibrary = _$resourceLibrary_;
   }));
 
   it('should get a resource for a given key', function() {
-
+    $resourceLibrary.extend({ key: 'value' });
+    expect($resourceLibrary.get('key')).toEqual('value');
   });
 
   it('should accept an object for extending the resources library', function() {
-
+    $resourceLibrary.extend({ key: 'value' });
+    expect($resourceLibrary.get('key')).toEqual('value');
   });
 
   it('should accept an array of objects for extending resources library', function() {
-
+    $resourceLibrary.extend([{ rel: 'key', uri: 'value' }]);
+    expect($resourceLibrary.get('key')).toEqual('value');
   });
 
   it('should set the key of the resource relative to the provided base', function() {
+    $resourceLibrary.extend({ okey: 'ovalue' }, 'obase');
+    expect($resourceLibrary.get('obase.okey')).toEqual('ovalue');
 
+    $resourceLibrary.extend([{ rel: 'akey', uri: 'avalue' }], 'abase');
+    expect($resourceLibrary.get('abase.akey')).toEqual('avalue');
   });
 });
 

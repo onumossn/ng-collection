@@ -237,17 +237,17 @@ angular.module('ngRestfulCollection', [])
 
       extend('', defaults.baseLinks);
 
-      function extend(base, rels) {
+      function extend(rels, base) {
         base = base ? base + '.' : '';
 
-        if (angular.isObject(rels)) {
-          rels.forEach(function(value, key) {
+        if (angular.isArray(rels)) {
+          angular.forEach(rels, function(value) {
+            cache.put(base + value.rel, value.uri);
+          });     
+        } else if (angular.isObject(rels)) {
+          angular.forEach(rels, function(value, key) {
             cache.put(base + key, value);
           });
-        } else if (angular.isArray(rels)) {
-          rels.forEach(function(value) {
-            cache.put(base + value.rel, value.url);
-          });            
         }
       }
 
