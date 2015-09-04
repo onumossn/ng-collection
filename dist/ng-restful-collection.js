@@ -3,7 +3,7 @@ angular.module('ngRestfulCollection', [])
    * @ngdoc provider
    * @name $collectionProvider
    * @description
-   * Use `$collectionProvider` to change the default behavior of the {@link ngCollection.$collection $collection} factory.
+   * Use `$collectionProvider` to change the default behavior of the {@link ngRestfulCollection.$collection $collection} factory.
    * */
   .provider('$collection', function() {
     this.defaults = {
@@ -22,7 +22,7 @@ angular.module('ngRestfulCollection', [])
      * @requires $injector
      * @requires $cacheFactory
      * @requires $injector
-     * @requires ngCollection.$resourceLibrary
+     * @requires ngRestfulCollection.$resourceLibrary
      * 
      * @description
      * The $collection factory allows you to create a {@link $collection.Collection Collection} object
@@ -215,7 +215,7 @@ angular.module('ngRestfulCollection', [])
    * @ngdoc provider
    * @name $resourceLibraryProvider
    * @description
-   * Use `$resourceLibraryProvider` to change the default behavior of the {@link ngCollection.$resourceLibrary $resourceLibrary} service.
+   * Use `$resourceLibraryProvider` to change the default behavior of the {@link ngRestfulCollection.$resourceLibrary $resourceLibrary} service.
    * */
   .provider('$resourceLibrary', function() {
     this.defaults = {
@@ -259,19 +259,19 @@ angular.module('ngRestfulCollection', [])
   })
   /**
   * @ngdoc controller
-  * @name ngCollectionCtrl
+  * @name ngRestfulCollectionCtrl
   * @requires $scope
   * @requires $attrs
   * @requires $parse
   * @requires $collection
   *
   * @description
-  * Exposes {@link $collection.Collection Collection} of the types and params specified in `$attrs.ngCollection`.
-  * `$attrs.ngCollection` needs to contain an array of objects. The objects need have
+  * Exposes {@link $collection.Collection Collection} of the types and params specified in `$attrs.ngRestfulCollection`.
+  * `$attrs.ngRestfulCollection` needs to contain an array of objects. The objects need have
   * a `type` property and may contain a `params` property.
   * */
-  .controller('ngCollectionCtrl', ['$scope', '$attrs', '$parse', '$collection', function($scope, $attrs, $parse, $collection) {
-    var collections = $parse($attrs.ngCollection)($scope);
+  .controller('ngRestfulCollectionCtrl', ['$scope', '$attrs', '$parse', '$collection', function($scope, $attrs, $parse, $collection) {
+    var collections = $parse($attrs.ngRestfulCollection)($scope);
 
     $scope.getEditCopy = angular.copy;
 
@@ -309,13 +309,13 @@ angular.module('ngRestfulCollection', [])
   }])
   /**
    * @ngdoc directive
-   * @name ngCollection
+   * @name ngRestfulCollection
    * @description
-   * Exposes {@link ngCollectionCtrl ngCollectionCtrl}.
+   * Exposes {@link ngRestfulCollectionCtrl ngRestfulCollectionCtrl}.
    * */
-  .directive('ngCollection', function() {
+  .directive('ngRestfulCollection', function() {
     return {
       restrict: 'A',
-      controller: 'ngCollectionCtrl'
+      controller: 'ngRestfulCollectionCtrl'
     };
   });

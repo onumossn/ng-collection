@@ -74,7 +74,7 @@ describe('$resourceLibrary', function () {
 
 /****************************************************************************/
 
-describe('ngCollectionCtrl', function () {
+describe('ngRestfulCollectionCtrl', function () {
   var $scope,
     $controller,
     $rootScope,
@@ -109,9 +109,9 @@ describe('ngCollectionCtrl', function () {
 
     $scope = $rootScope.$new();
 
-    $controller('ngCollectionCtrl', {
+    $controller('ngRestfulCollectionCtrl', {
       $scope: $scope,
-      $attrs: { ngCollection: angular.toJson(mockAttrs) }
+      $attrs: { ngRestfulCollection: angular.toJson(mockAttrs) }
     });
   }));
 
