@@ -11,7 +11,7 @@ module.exports = function (grunt) {
   require('time-grunt')(grunt);
   
   grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-ng-annotate');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-karma');
@@ -26,8 +26,15 @@ module.exports = function (grunt) {
       dist: ['dist/'],
       coverage: ['coverage/']
     },
-    copy: {
-      'dist/ng-collection.js': [ 'src/ng-collection.js' ]
+    ngAnnotate: {
+        options: {
+          singleQuotes: true
+        },
+        dist: {
+          files: {
+            'dist/ng-collection.js': 'src/ng-collection.js'
+          }
+        }
     },
     uglify: {
       main: {
@@ -74,6 +81,6 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('test', [ 'build', 'jshint', 'karma:dist', 'karma:min' ]);
-  grunt.registerTask('build', [ 'clean', 'copy', 'uglify' ]);
+  grunt.registerTask('build', [ 'clean', 'ngAnnotate', 'uglify' ]);
   grunt.registerTask('default', [ 'build' ]);
 };

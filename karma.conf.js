@@ -6,7 +6,7 @@ module.exports = function (config) {
     files: [
       'bower_components/angular/angular.js',
       'bower_components/angular-mocks/angular-mocks.js',
-      'src/ng-collection.js',
+      'dist/ng-collection.js',
       'tests/**/*.js'
     ],
     captureTimeout: 60000,
@@ -28,7 +28,7 @@ module.exports = function (config) {
       dir: 'coverage/'
     },
     preprocessors: {
-      'src/ng-collection.js': ['coverage']
+      'dist/ng-collection.js': ['coverage']
     },
     reporters: ['progress', 'coverage']
   });
