@@ -80,8 +80,8 @@ describe('ngCollectionCtrl', function () {
     $rootScope,
     $q,
     $collection,
-    mockAttrs = [ { resource: 'ASDF', params: { c: 'd' } },
-      { resource: 'HelloBye', params: {} } ];
+    mockAttrs = [ { type: 'ASDF', params: { c: 'd' } },
+      { type: 'HelloBye', params: {} } ];
 
   beforeEach(module(function($provide) {
     $provide.factory('$collection', function($q) {
@@ -111,9 +111,7 @@ describe('ngCollectionCtrl', function () {
 
     $controller('ngCollectionCtrl', {
       $scope: $scope,
-      $attrs: {
-        ngCollection: angular.toJson(mockAttrs)
-      }
+      $attrs: { ngCollection: angular.toJson(mockAttrs) }
     });
   }));
 
