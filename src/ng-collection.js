@@ -303,7 +303,7 @@ angular.module('ngCollection', [])
     }
 
     function getPromiseHandler(callback) {
-      return function(resp) { if (callback) callback(resp) };
+      return function(resp) { if (callback) callback(resp); };
     }
 
   })
