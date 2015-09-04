@@ -1,15 +1,15 @@
-#ng-collection
+#ng-restful-collection
 
 ## Status: In-Development
 
 
 ##<a name="install"></a> Install
 * <a name="manual"></a>**Manual** (Better method on release): `download this repo`
-* <a name="bower"></a>**Bower** (TODO): `bower install ng-collection --save`
-* <a name="npm"></a>**NPM** (TODO): `npm install ng-collection`
+* <a name="bower"></a>**Bower** (TODO): `bower install ng-restful-collection --save`
+* <a name="npm"></a>**NPM** (TODO): `npm install ng-restful-collection`
 ```html
 <script src="angular(.min).js"></script>
-<script src="ng-collection(.min).js"></script>
+<script src="ng-restful-collection(.min).js"></script>
 ```
 
 
@@ -17,9 +17,9 @@
 html:
 ```html
 <script src="angular.min.js"></script>
-<script src="ng-collection.min.js"></script>
+<script src="ng-restful-collection.min.js"></script>
 
-<div ng-app="TodoList" ng-controller="TodoCtrl" ng-collection="[{resource: 'TodoResource'}]">
+<div ng-app="TodoList" ng-controller="TodoCtrl" ng-restful-collection="[{type: 'TodoResource'}]">
   <ul>
     <li ng-repeat="todo in todoResource.data.collection">
       <span>{{todo.title}}</span>
@@ -47,7 +47,7 @@ html:
 Javascript:
 ```js
 //inject directives and services.
-var app = angular.module('TodoList', ['ngCollection'])
+var app = angular.module('TodoList', ['ngRestfulCollection'])
   .config(function($resourceLibraryProvider) {
     $resourceLibraryProvider.defaults.baseLinks = {
       TodoResource: '<RESTful resource url>'

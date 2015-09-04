@@ -1,6 +1,6 @@
 describe
 
-beforeEach(module('ngCollection'));
+beforeEach(module('ngRestfulCollection'));
 
 describe('$collection', function () {
   // var $httpBackend;

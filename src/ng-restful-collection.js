@@ -1,4 +1,4 @@
-angular.module('ngCollection', [])
+angular.module('ngRestfulCollection', [])
   /**
    * @ngdoc provider
    * @name $collectionProvider
@@ -34,8 +34,8 @@ angular.module('ngCollection', [])
      * @param {Object} params Any additional query params to apply to the resource.
      *  This is, also, used to uniquely identify a collection.
      **/
-    this.$get = ['$q', '$http', '$filter', '$cacheFactory', '$injector', '$resourceLibrary', function($q, $http, $filter, $cacheFactory, $injector, $resourceLibrary) {
-      var cache = $cacheFactory('ng-collection'),
+    this.$get = function($q, $http, $filter, $cacheFactory, $injector, $resourceLibrary) {
+      var cache = $cacheFactory('ng-restful-collection'),
         defaults = this.defaults,
         preRequest = preRequest ? $injector.get(preRequest) : {
           run: function() { $q.when(true); }
@@ -209,7 +209,7 @@ angular.module('ngCollection', [])
         cache.set(key, collection);
         return collection;
       };
-    }];
+    };
   })
   /**
    * @ngdoc provider
@@ -231,7 +231,7 @@ angular.module('ngCollection', [])
      *
      * This service is to be extended to better take advantage HATEOAS.
      * */
-    this.$get = ['$cacheFactory', function($cacheFactory) {
+    this.$get = function($cacheFactory) {
       var defaults = this.defaults,
         cache = $cacheFactory('resource-library');
 
@@ -255,7 +255,7 @@ angular.module('ngCollection', [])
         extend: extend,
         get: cache.get
       };
-    }];
+    };
   })
   /**
   * @ngdoc controller
@@ -270,7 +270,7 @@ angular.module('ngCollection', [])
   * `$attrs.ngCollection` needs to contain an array of objects. The objects need have
   * a `type` property and may contain a `params` property.
   * */
-  .controller('ngCollectionCtrl', ['$scope', '$attrs', '$parse', '$collection', function($scope, $attrs, $parse, $collection) {
+  .controller('ngCollectionCtrl', function($scope, $attrs, $parse, $collection) {
     var collections = $parse($attrs.ngCollection)($scope);
 
     $scope.getEditCopy = angular.copy;
@@ -306,7 +306,7 @@ angular.module('ngCollection', [])
       return function(resp) { if (callback) callback(resp); };
     }
 
-  }])
+  })
   /**
    * @ngdoc directive
    * @name ngCollection

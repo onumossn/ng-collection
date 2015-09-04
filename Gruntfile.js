@@ -32,7 +32,7 @@ module.exports = function (grunt) {
         },
         dist: {
           files: {
-            'dist/ng-collection.js': 'src/ng-collection.js'
+            'dist/ng-restful-collection.js': 'src/ng-restful-collection.js'
           }
         }
     },
@@ -41,10 +41,10 @@ module.exports = function (grunt) {
         options: {
           report: 'min',
           sourceMap: true,
-          sourceMapName: 'dist/ng-collection.min.map',
+          sourceMapName: 'dist/ng-restful-collection.min.map',
         },
         files: {
-          'dist/ng-collection.min.js': ['dist/ng-collection.js']
+          'dist/ng-restful-collection.min.js': ['dist/ng-restful-collection.js']
         }
       }
     },
@@ -67,7 +67,7 @@ module.exports = function (grunt) {
           files: [
             'bower_components/angular/angular.js',
             'bower_components/angular-mocks/angular-mocks.js',
-            'dist/ng-collection.min.js',
+            'dist/ng-restful-collection.min.js',
             'test/**/*.js'
           ]
         }

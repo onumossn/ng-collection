@@ -1,14 +1,14 @@
 {
-  "name": "ng-collection",
+  "name": "ng-restful-collection",
   "version": "1.0.0",
   "description": "Simple DRY way of getting CRUD into angular views",
-  "main": "src/ng-collection.js",
+  "main": "dist/ng-restful-collection.js",
   "scripts": {
     "test": "grunt test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/onumossn/ng-collection.git"
+    "url": "git+https://github.com/onumossn/ng-restful-collection.git"
   },
   "keywords": [
     "angular",
@@ -18,9 +18,9 @@
   "author": "Mohammed Nauage",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/onumossn/ng-collection/issues"
+    "url": "https://github.com/onumossn/ng-restful-collection/issues"
   },
-  "homepage": "https://github.com/onumossn/ng-collection#readme",
+  "homepage": "https://github.com/onumossn/ng-restful-collection#readme",
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^0.6.0",
