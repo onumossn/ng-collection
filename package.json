@@ -13,7 +13,14 @@
   "keywords": [
     "angular",
     "crud",
-    "views"
+    "views",
+    "restful",
+    "template",
+    "directive",
+    "dry",
+    "model",
+    "collection",
+    "resource"
   ],
   "author": "Mohammed Nauage",
   "license": "MIT",
