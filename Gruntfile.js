@@ -68,7 +68,7 @@ module.exports = function (grunt) {
             'bower_components/angular/angular.js',
             'bower_components/angular-mocks/angular-mocks.js',
             'dist/ng-restful-collection.min.js',
-            'test/**/*.js'
+            'tests/**/*.js'
           ]
         }
       }

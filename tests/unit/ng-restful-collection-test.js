@@ -3,46 +3,145 @@ describe
 beforeEach(module('ngRestfulCollection'));
 
 describe('$collection', function () {
-  // var $httpBackend;
+  var $httpBackend,
+    $collection;
 
-  // beforeEach(inject(function(_$httpBackend_) {
-  //   $httpBackend = _$httpBackend_;
-  // }));
+  beforeEach(module(function($provide) {
+    $provide.factory('$resourceLibrary', function($q) {
+      return {
+        get: jasmine.createSpy('get').and.returnValue('a')
+      };
+    });
+  }));
 
-  // afterEach(function() {
-  //   $httpBackend.verifyNoOutstandingRequest();
-  //   $httpBackend.verifyNoOutstandingExpectation();
-  // });
+  beforeEach(inject(function(_$httpBackend_, _$collection_) {
+    $httpBackend = _$httpBackend_;
+    $collection = _$collection_;
+  }));
+
+  afterEach(function() {
+    $httpBackend.verifyNoOutstandingRequest();
+    $httpBackend.verifyNoOutstandingExpectation();
+  });
 
   it('should ensure only a single instance for each unique resource and params set pair', function() {
+    var col1 = $collection('a', { b: 'c' }),
+      col2 = $collection('a', { d: 'e' }),
+      col3 = $collection('f'),
+      col4 = $collection('f');
 
+    expect(col1).not.toBe(col2);
+    expect(col2).not.toBe(col3);
+    expect(col1).not.toBe(col3);
+    expect(col3).toBe(col4);
   });
 
   it('should POST when no id exists on entity', function() {
+    var col = $collection('a'),
+      saveEntity = { a: 'b' },
+      savedEntity = { id: 1, a: 'b' };
 
+    $httpBackend.expectPOST('a').respond(savedEntity);
+
+    col.save(saveEntity);
+
+    $httpBackend.flush();
+    expect(col.data.collection[0]).toEqual(savedEntity);
+    expect(col.data.collection.length).toBe(1);
   });
 
   it('should PUT when id exists on entity', function() {
+    var col = $collection('a'),
+      gotEntity = { id: 1, a: 'b' }
+      saveEntity = { id: 1, a: 'c' };
 
+    $httpBackend.expectGET('a/1').respond(gotEntity);
+    col.get({ id: 1 });
+    $httpBackend.flush();
+    
+    expect(col.data.collection[0]).toEqual(gotEntity);
+    expect(col.data.collection.length).toBe(1);
+
+    $httpBackend.expectPUT('a/1').respond(saveEntity);
+    col.save(saveEntity);
+    $httpBackend.flush();
+
+    expect(col.data.collection[0]).toEqual(saveEntity);
+    expect(col.data.collection.length).toBe(1);
   });
 
   it('should GET a collection with included params', function() {
+    var col = $collection('a'),
+      gotCollection = { data: [ { id: 1 }, { id: 2 }] };
+    
+    $httpBackend.expectGET('a?b=c').respond(gotCollection);
+    col.get({ b: 'c' });
+    $httpBackend.flush();
 
+    expect(col.data.collection).toEqual(gotCollection.data);
   });
 
   it('should GET by id when an id param is given', function() {
+    var col = $collection('a'),
+      entity = { id: 1, a: 'b' };
+    
+    $httpBackend.expectGET('a/1').respond(entity);
+    col.get({ id: 1 });
+    $httpBackend.flush();
 
+    expect(col.data.collection[0]).toEqual(entity);
+    expect(col.data.collection.length).toBe(1);
   });
 
-  it('should update the local collection on GET, PUT, POST, and DELETE', function() {
+  it('should DELETE entity', function() {
+    var col = $collection('a'),
+      gotCollection = { data: [ { id: 1 }, { id: 2 }] };
+    
+    $httpBackend.expectGET('a?b=c').respond(gotCollection);
+    col.get({ b: 'c' });
+    $httpBackend.flush();
 
+    expect(col.data.collection).toEqual(gotCollection.data);
+    expect(col.data.collection.length).toBe(2);
+
+    $httpBackend.expectDELETE('a/1').respond(201, '');
+    col.remove({ id: 1 });
+    $httpBackend.flush();
+
+    expect(col.data.collection[0]).toEqual({ id: 2 });
+    expect(col.data.collection.length).toBe(1);
   });
 
-  it('should reject the defer with an error on failures', function() {
+  it('should reject promise with on request failures', function() {
+    var col = $collection('a');
 
+    $httpBackend.expectGET('a').respond(400, '');
+    $httpBackend.expectPOST('a').respond(401, '');
+    $httpBackend.expectPUT('a/1').respond(403, '');
+    $httpBackend.expectDELETE('a/1').respond(500, '');
+
+    col.get().then(function() {}, function(resp) {
+      expect(resp.status).toBe(400);
+    });
+
+    col.save({ }).then(function() {}, function(resp) {
+      expect(resp.status).toBe(401);
+    });
+
+    col.save({ id: 1 }).then(function() {}, function(resp) {
+      expect(resp.status).toBe(403);
+    });
+
+    col.remove({ id : 1 }).then(function() {}, function(resp) {
+      expect(resp.status).toBe(500);
+    });
+
+    $httpBackend.flush();
+
+    expect(col.data.collection.length).toBe(0);
   });
 
-  it('should use an authorization service if provided', function() {
+  it('should run preRequest service if provided', function() {
 
   });
 });

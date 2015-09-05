@@ -6,7 +6,7 @@ angular.module('ngRestfulCollection', [])
    * Use `$collectionProvider` to change the default behavior of the {@link ngRestfulCollection.$collection $collection} factory.
    * */
   .provider('$collection', function() {
-    this.defaults = {
+    var defaults = this.defaults = {
       preRequest: null,
       collectionKey: 'data',
       idKey: 'id'
@@ -36,9 +36,9 @@ angular.module('ngRestfulCollection', [])
      **/
     this.$get = ['$q', '$http', '$filter', '$cacheFactory', '$injector', '$resourceLibrary', function($q, $http, $filter, $cacheFactory, $injector, $resourceLibrary) {
       var cache = $cacheFactory('ng-restful-collection'),
-        defaults = this.defaults,
+        options = angular.copy(defaults),
         preRequest = preRequest ? $injector.get(preRequest) : {
-          run: function() { $q.when(true); }
+          run: function() { return $q.when(true); }
         };
 
       function Collection(type, params) {
@@ -82,23 +82,26 @@ angular.module('ngRestfulCollection', [])
        **/
       Collection.prototype.get = function(params) {
         var self = this,
-          url = params[defaults.idKey] ? getEntityUrl(self.meta.url, params[defaults.idKey]) : self.meta.url;
+          requestParams = angular.copy(params || {}),
+          single = !!requestParams[options.idKey],
+          url = single ?
+            getEntityUrl(self._meta.url, requestParams[options.idKey]) : self._meta.url;
         
-        params = angular.copy(params || {});
-
-        if (!params[defaults.idKey]) angular.extend(params, self.meta.params);
+        if (!single) angular.extend(requestParams, self._meta.params);
+        delete requestParams[options.idKey];
 
         return preRequest.run()
           .then(function() {
-            return $http.get(url, { params: params });
+            return $http.get(url, { params: requestParams });
           }, quickReject)
-          .then(function(data) {
-            var promisedValue;
-            if(params[defaults.idKey]) {
+          .then(function(resp) {
+            var promisedValue,
+              data = resp.data;
+            if(single) {
               insertIntoCollection(self.data.collection, data);
               promisedValue = angular.copy(data);
             } else {
-              self.data.collection = resp[defaults.collectionKey] || [];
+              self.data.collection = data[options.collectionKey] || [];
               promisedValue = angular.copy(self.data.collection);
             }
             return promisedValue;
@@ -120,15 +123,16 @@ angular.module('ngRestfulCollection', [])
        **/
       Collection.prototype.save = function(entity) {
         var self = this,
-          url = getEntityUrl(self.meta.url, entity[defaults.idKey]);
+          url = entity[options.idKey] ?
+            getEntityUrl(self._meta.url, entity[options.idKey]) : self._meta.url;
         return preRequest.run()
           .then(function() {
-            var method = entity[defaults.idKey] ? 'put' : 'post';
+            var method = entity[options.idKey] ? 'put' : 'post';
             return $http[method](url, entity);
           }, quickReject)
-          .then(function(data) {
-            insertIntoCollection(self.data.collection, data);
-            return angular.copy(data);
+          .then(function(resp) {
+            insertIntoCollection(self.data.collection, resp.data);
+            return angular.copy(resp.data);
           }, quickReject);
       };
 
@@ -148,14 +152,14 @@ angular.module('ngRestfulCollection', [])
 
         return preRequest.run()
           .then(function() {
-            return $http.delete(getEntityUrl(self.meta.url, entity[defaults.idKey]));
+            return $http.delete(getEntityUrl(self._meta.url, entity[options.idKey]));
           }, quickReject)
           .then(function() {
             //seems weird to find something you already have, but
             //time has passed since the network request has been made
             //and the data may have changed which means that the original
             //no longer exists in the current collection
-            var original = findById(self.data.collection, entity[defaults.idKey]),
+            var original = findById(self.data.collection, entity[options.idKey]),
               index = self.data.collection.indexOf(original);
             self.data.collection.splice(index, 1);
           }, quickReject);
@@ -169,7 +173,7 @@ angular.module('ngRestfulCollection', [])
       //extending currently existing entity in the collection
       //or pushing the entity into the colleciton if it does not exist
       function insertIntoCollection(collection, entity) {
-        var original = findById(collection, entity[defaults.idKey]);
+        var original = findById(collection, entity[options.idKey]);
         if (original)
           angular.extend(original, entity);
         else 
@@ -186,7 +190,7 @@ angular.module('ngRestfulCollection', [])
       //helper for finding first entity in a collection by id
       //however this is suboptimal
       function findById(collection, id) {
-        return $filter('filter')(self.data.collection, getDynamicKeyObject(defaults.idKey, id))[0];
+        return $filter('filter')(collection, getDynamicKeyObject(options.idKey, id))[0];
       }
 
       //creates cache key based on type string
@@ -206,7 +210,7 @@ angular.module('ngRestfulCollection', [])
         if(inCache) return inCache;
         
         var collection = new Collection(type, params);
-        cache.set(key, collection);
+        cache.put(key, collection);
         return collection;
       };
     }];
@@ -218,7 +222,7 @@ angular.module('ngRestfulCollection', [])
    * Use `$resourceLibraryProvider` to change the default behavior of the {@link ngRestfulCollection.$resourceLibrary $resourceLibrary} service.
    * */
   .provider('$resourceLibrary', function() {
-    this.defaults = {
+    var defaults = this.defaults = {
       baseLinks: {}
     };
 
@@ -232,10 +236,10 @@ angular.module('ngRestfulCollection', [])
      * This service is to be extended to better take advantage HATEOAS.
      * */
     this.$get = ['$cacheFactory', function($cacheFactory) {
-      var defaults = this.defaults,
+      var options = angular.copy(defaults),
         cache = $cacheFactory('resource-library');
 
-      extend('', defaults.baseLinks);
+      extend('', options.baseLinks);
 
       function extend(rels, base) {
         base = base ? base + '.' : '';

@@ -11,7 +11,7 @@ module.exports = function (config) {
     ],
     captureTimeout: 60000,
     colors: true,
-    logLevel: config.LOG_DEBUG,
+    logLevel: config.LOG_INFO,
     port: 9876,
     plugins: [
       'karma-jasmine',
