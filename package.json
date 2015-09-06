@@ -2,7 +2,7 @@
   "name": "ng-restful-collection",
   "version": "1.0.0",
   "description": "Simple DRY way of getting CRUD into angular views",
-  "main": "dist/*",
+  "main": "dist/ng-restful-collection.min.js",
   "scripts": {
     "test": "grunt test"
   },

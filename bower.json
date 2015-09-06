@@ -7,7 +7,7 @@
   ],
   "description": "Simple DRY way of getting CRUD into angular views",
   "main": [
-    "dist/*"
+    "dist/ng-restful-collection.min.js"
   ],
   "keywords": [
     "angular",
