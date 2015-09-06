@@ -1,0 +1,6 @@
+dependencies:
+  pre:
+    - bower install
+test:
+  post:
+    - grunt coveralls || true
