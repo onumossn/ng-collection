@@ -15,7 +15,6 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-karma-coveralls');
 
   var pkg = grunt.file.readJSON('package.json');
 
@@ -71,11 +70,6 @@ module.exports = function (grunt) {
             'tests/**/*.js'
           ]
         }
-      }
-    },
-    coveralls: {
-      options: {
-        coverage_dir: 'coverage'
       }
     }
   });
