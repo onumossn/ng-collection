@@ -1,4 +1,4 @@
-#ng-restful-collection
+#ng-restful-collection [![Circle CI](https://img.shields.io/circleci/project/onumossn/ng-restful-collection/master.svg?style=flat-square)](https://circleci.com/gh/onumossn/ng-restful-collection)
 
 ## Status: In-Development
 
