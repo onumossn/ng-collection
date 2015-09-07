@@ -1,4 +1,4 @@
-describe
+'use strict';
 
 beforeEach(module('ngRestfulCollection'));
 
@@ -52,7 +52,7 @@ describe('$collection', function () {
 
   it('should PUT when id exists on entity', function() {
     var col = $collection('a'),
-      gotEntity = { id: 1, a: 'b' }
+      gotEntity = { id: 1, a: 'b' },
       saveEntity = { id: 1, a: 'c' };
 
     $httpBackend.expectGET('a/1').respond(gotEntity);
@@ -88,6 +88,19 @@ describe('$collection', function () {
     $httpBackend.expectGET('a/1').respond(entity);
     col.get({ id: 1 });
     $httpBackend.flush();
+
+    expect(col.data.collection[0]).toEqual(entity);
+    expect(col.data.collection.length).toBe(1);
+  });
+
+  it('should use local copy on GET by id if available', function() {
+    var col = $collection('a'),
+      entity = { id: 1, a: 'b' };
+    
+    $httpBackend.expectGET('a/1').respond(entity);
+    col.get({ id: 1 });
+    $httpBackend.flush();
+    col.get({ id: 1 });
 
     expect(col.data.collection[0]).toEqual(entity);
     expect(col.data.collection.length).toBe(1);
@@ -285,8 +298,8 @@ describe('ngRestfulCollectionCtrl', function () {
         success = jasmine.createSpy('success'),
         error = jasmine.createSpy('error');
 
-      $collection('ASDF').save.and.returnValue($q.reject(false))
-      $collection('ASDF').remove.and.returnValue($q.reject(false))
+      $collection('ASDF').save.and.returnValue($q.reject(false));
+      $collection('ASDF').remove.and.returnValue($q.reject(false));
 
       $scope.aSDF.save(entity, success, error);
       $scope.$digest();
