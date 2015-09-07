@@ -10,6 +10,8 @@
 
 
 ##<a name="usage"></a> Usage
+[ng-restful-collection-example](https://github.com/onumossn/ng-restful-collection-example) contains a simple example todo list using ng-restful-collection.
+
 html:
 ```html
 <script src="angular.min.js"></script>
