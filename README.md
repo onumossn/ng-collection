@@ -1,12 +1,8 @@
 #ng-restful-collection [![Circle CI](https://img.shields.io/circleci/project/onumossn/ng-restful-collection/master.svg)](https://circleci.com/gh/onumossn/ng-restful-collection)
 
-## Status: In-Development
-
-
 ##<a name="install"></a> Install
-* <a name="manual"></a>**Manual** (Better method on release): `download this repo`
-* <a name="bower"></a>**Bower** (TODO): `bower install ng-restful-collection --save`
-* <a name="npm"></a>**NPM** (TODO): `npm install ng-restful-collection`
+* <a name="bower"></a>**Bower**: `bower install ng-restful-collection`
+* <a name="npm"></a>**NPM**: `npm install ng-restful-collection`
 ```html
 <script src="angular(.min).js"></script>
 <script src="ng-restful-collection(.min).js"></script>
@@ -30,7 +26,7 @@ html:
           <span>Todo:</span>
           <input type="text" name="todo" ng-model="todo.name" title="Todo" required/> 
         </label>
-        <button type="submit" ng-click="editForm.$valid && todoResource.save(todoCopy, showConfirmation, showError)">Save</button>
+        <button type="submit" ng-click="todoResource.save(todoCopy, showConfirmation, showError)">Save</button>
       </form>
     </li>
   </ul>
@@ -40,7 +36,7 @@ html:
       <span>Todo:</span>
       <input type="text" name="todo" ng-model="newTodo.name" required/>
     </label>
-    <button type="submit" ng-click="addForm.$valid && todoResource.save(newTodo, showConfirmation, showError)">Save</button>
+    <button type="submit" ng-click="todoResource.save(newTodo, showConfirmation, showError)">Save</button>
   </form>
 </div>
 ```
