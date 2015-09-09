@@ -70,6 +70,7 @@ module.exports = function (grunt) {
       },
       dist: {
         options: {
+          browsers: ['PhantomJS'],
           files: [
             'bower_components/angular/angular.js',
             'bower_components/angular-mocks/angular-mocks.js',
