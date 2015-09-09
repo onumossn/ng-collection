@@ -58,9 +58,26 @@ module.exports = function (grunt) {
         configFile: 'karma.conf.js'
       },
       dev: {
-        browsers: ['PhantomJS']
+        options: {
+          browsers: ['PhantomJS'],
+          files: [
+            'bower_components/angular/angular.js',
+            'bower_components/angular-mocks/angular-mocks.js',
+            'src/ng-restful-collection.js',
+            'tests/**/*.js'
+          ]
+        }
       },
-      dist: {},
+      dist: {
+        options: {
+          files: [
+            'bower_components/angular/angular.js',
+            'bower_components/angular-mocks/angular-mocks.js',
+            'dist/ng-restful-collection.js',
+            'tests/**/*.js'
+          ]
+        }
+      },
       min: {
         options: {
           files: [
