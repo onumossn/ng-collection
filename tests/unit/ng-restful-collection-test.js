@@ -154,8 +154,19 @@ describe('$collection', function () {
     expect(col.data.collection.length).toBe(0);
   });
 
-  it('should run preRequest service if provided', function() {
+  it('should clear local collection', function() {
+    var col = $collection('a'),
+      gotCollection = { data: [ { id: 1 }, { id: 2 }] };
+    
+    $httpBackend.expectGET('a?b=c').respond(gotCollection);
+    col.get({ b: 'c' });
+    $httpBackend.flush();
 
+    expect(col.data.collection).toEqual(gotCollection.data);
+
+    col.clearLocal();
+
+    expect(col.data.collection).toEqual([]);
   });
 });
 
@@ -213,7 +224,8 @@ describe('ngRestfulCollectionCtrl', function () {
             data: { collection: [] },
             get: jasmine.createSpy('get').and.returnValue($q.resolve(true)),
             save: jasmine.createSpy('save').and.returnValue($q.resolve(true)),
-            remove: jasmine.createSpy('remove').and.returnValue($q.resolve(true))
+            remove: jasmine.createSpy('remove').and.returnValue($q.resolve(true)),
+            clearLocal: jasmine.createSpy('clearLocal')
           };
         }
         return collections[key];
@@ -247,40 +259,42 @@ describe('ngRestfulCollectionCtrl', function () {
       expect($collection('HelloBye').get.calls.count()).toEqual(1);
     });
 
-    it('should expose collection data, save, and remove', function() {
+    it('should expose collection data, save, remove, and refresh', function() {
       expect($scope.aSDF.data).toEqual(jasmine.any(Object));
       expect($scope.aSDF.save).toEqual(jasmine.any(Function));
       expect($scope.aSDF.remove).toEqual(jasmine.any(Function));
+      expect($scope.aSDF.refresh).toEqual(jasmine.any(Function));
       expect($scope.helloBye.data).toEqual(jasmine.any(Object));
       expect($scope.helloBye.save).toEqual(jasmine.any(Function));
       expect($scope.helloBye.remove).toEqual(jasmine.any(Function));
+      expect($scope.helloBye.refresh).toEqual(jasmine.any(Function));
       expect($scope.helloBye.data).not.toBe($scope.aSDF.data);
       expect($scope.helloBye.save).not.toBe($scope.aSDF.save);
       expect($scope.helloBye.remove).not.toBe($scope.aSDF.remove);
+      expect($scope.helloBye.refresh).not.toEqual($scope.aSDF.refresh);
     });
   });
 
   describe('behavior', function() {
-    it('should call appropriate $collection function on save and remove', function() {
-      var entity = { test: 'a' };
+    it('should call appropriate $collection function on save, remove, and refresh', function() {
+      var entity = { test: 'a' },
+        collection = $collection('ASDF');
+
       $scope.aSDF.save(entity);
       $scope.$digest();
-      expect($collection('ASDF').save).toHaveBeenCalledWith(entity);
-
-      $scope.helloBye.save(entity);
-      $scope.$digest();
-      expect($collection('HelloBye').save).toHaveBeenCalledWith(entity);
+      expect(collection.save).toHaveBeenCalledWith(entity);
 
       $scope.aSDF.remove(entity);
       $scope.$digest();
-      expect($collection('ASDF').remove).toHaveBeenCalledWith(entity);
+      expect(collection.remove).toHaveBeenCalledWith(entity);
 
-      $scope.helloBye.remove(entity);
+      $scope.aSDF.refresh();
       $scope.$digest();
-      expect($collection('HelloBye').remove).toHaveBeenCalledWith(entity);
+      expect(collection.clearLocal).toHaveBeenCalledWith();
+      expect(collection.get).toHaveBeenCalledWith();
     });
 
-    it('should accept success callbacks on save and remove', function() {
+    it('should accept success callbacks on save, remove, and refresh', function() {
       var entity = { test: 'a' },
         success = jasmine.createSpy('success');
 
@@ -291,13 +305,18 @@ describe('ngRestfulCollectionCtrl', function () {
       $scope.aSDF.remove(entity, success);
       $scope.$digest();
       expect(success.calls.count()).toEqual(2);
+
+      $scope.aSDF.refresh(success);
+      $scope.$digest();
+      expect(success.calls.count()).toEqual(3);
     });
 
-    it('should accept error callbacks on save and remove', function() {
+    it('should accept error callbacks on save, remove, and refresh', function() {
       var entity = { test: 'a' },
         success = jasmine.createSpy('success'),
         error = jasmine.createSpy('error');
 
+      $collection('ASDF').get.and.returnValue($q.reject(false));
       $collection('ASDF').save.and.returnValue($q.reject(false));
       $collection('ASDF').remove.and.returnValue($q.reject(false));
 
@@ -308,6 +327,10 @@ describe('ngRestfulCollectionCtrl', function () {
       $scope.aSDF.remove(entity, success, error);
       $scope.$digest();
       expect(error.calls.count()).toEqual(2);
+
+      $scope.aSDF.remove(entity, success, error);
+      $scope.$digest();
+      expect(error.calls.count()).toEqual(3);
     });
   });
 

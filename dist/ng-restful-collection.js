@@ -37,7 +37,7 @@
        * @param {Object} params Any additional query params to apply to the resource.
        *  This is, also, used to uniquely identify a collection.
        **/
-      this.$get = ['$q', '$http', '$filter', '$cacheFactory', '$injector', '$resourceLibrary', function($q, $http, $filter, $cacheFactory, $injector, $resourceLibrary) {
+      this.$get = ['$q', '$http', '$filter', '$cacheFactory', '$injector', '$rootScope', '$resourceLibrary', function($q, $http, $filter, $cacheFactory, $injector, $rootScope, $resourceLibrary) {
         var cache = $cacheFactory('ng-restful-collection'),
           options = angular.copy(defaults),
           preRequest = preRequest ? $injector.get(preRequest) : {
@@ -54,6 +54,7 @@
            * It is meant to be private.
            */
           this._meta = {
+            type: type,
             url: $resourceLibrary.get(type),
             params: angular.copy(params)          
           };
@@ -176,6 +177,14 @@
               self.data.collection.splice(index, 1);
             }, quickReject);
         };
+
+        Collection.prototype.clearLocal = function() {
+          var self = this;
+          self.data.collection = [];
+          $rootScope.$emit('$collection:clear-local', self);
+        };
+
+
 
         function quickReject(err) {
           return $q.reject(err);
@@ -305,12 +314,17 @@
         $scope[collectionName] = angular.extend({
           data: resource.data,
           save: function(entity, success, error) {
-            resource.save(entity)
-              .then(getPromiseHandler(success), getPromiseHandler(error));
+            return resource.save(entity)
+              .then(getCallbackHandler(success), getCallbackHandler(error));
           },
           remove: function(entity, success, error) {
-            resource.remove(entity)
-              .then(getPromiseHandler(success), getPromiseHandler(error));
+            return resource.remove(entity)
+              .then(getCallbackHandler(success), getCallbackHandler(error));
+          },
+          refresh: function(success, error) {
+            resource.clearLocal();
+            return resource.get()
+              .then(getCallbackHandler(success), getCallbackHandler(error));
           }
         }, $scope[collectionName]);
 
@@ -325,7 +339,7 @@
           });
       }
 
-      function getPromiseHandler(callback) {
+      function getCallbackHandler(callback) {
         return function(resp) {
           if (callback) {
             callback(resp);
