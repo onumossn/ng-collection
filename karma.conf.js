@@ -30,6 +30,6 @@ module.exports = function (config) {
     preprocessors: {
       'dist/ng-restful-collection.js': ['coverage']
     },
-    reporters: ['coverage']
+    reporters: ['progress', 'coverage']
   });
 };
