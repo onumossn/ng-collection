@@ -1,5 +1,7 @@
 #ng-restful-collection [![Circle CI](https://img.shields.io/circleci/project/onumossn/ng-restful-collection/master.svg)](https://circleci.com/gh/onumossn/ng-restful-collection)
 
+ng-restful-collection contains a directive and factory to quickly build AngularJS applications containing resources with CRUD operations. The directive allows you to easily expose restful data collections and common operations on that collection to your templates. The factory creates a singleton for each specified type (resource) that stores a copy of the last requested GET on a specified resource and modifies the local collection based on save (POST and PUT) and remove (DELETE) operations. It, also, attempts to resolve a get by id using the local collection before making a request to the resource.
+
 ##<a name="install"></a> Install
 * <a name="bower"></a>**Bower**: `bower install ng-restful-collection`
 * <a name="npm"></a>**NPM**: `npm install ng-restful-collection`
