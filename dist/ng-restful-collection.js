@@ -93,7 +93,7 @@
           if (!single) {
             angular.extend(requestParams, self._meta.params);
           } else {
-            var localEntity = findById(self.data.collection, requestParams[options.idKey]);
+            var localEntity = findByIds(self.data.collection, [ requestParams[options.idKey] ])[0];
 
             if (localEntity) {
               return $q.resolve(angular.copy(localEntity));
@@ -172,7 +172,7 @@
               //time has passed since the network request has been made
               //and the data may have changed which means that the original
               //no longer exists in the current collection
-              var original = findById(self.data.collection, entity[options.idKey]),
+              var original = findByIds(self.data.collection, [ entity[options.idKey] ])[0],
                 index = self.data.collection.indexOf(original);
               self.data.collection.splice(index, 1);
             }, quickReject);
@@ -198,7 +198,7 @@
         //extending currently existing entity in the collection
         //or pushing the entity into the colleciton if it does not exist
         function insertIntoCollection(collection, entity) {
-          var original = findById(collection, entity[options.idKey]);
+          var original = findByIds(collection, [ entity[options.idKey] ])[0];
           if (original) {
             angular.extend(original, entity);
           } else { 
@@ -206,17 +206,23 @@
           }
         }
 
-        //helper for creating an object with a dynamic key value pair
-        function getDynamicKeyObject(key, id) {
-          var obj = {};
-          obj[key] = id;
-          return obj;
-        }
-
         //helper for finding first entity in a collection by id
         //however this is suboptimal
-        function findById(collection, id) {
-          return $filter('filter')(collection, getDynamicKeyObject(options.idKey, id))[0];
+        function findByIds(collection, ids) {
+          var results = [],
+            idsLength = ids.length,
+            idKey = options.idKey;
+
+          for (var i = 0, length = collection.length; i < length; i++) {
+            if (ids.indexOf(collection[i][idKey]) !== -1) {
+              results.push(collection[i]);
+              if (idsLength === results.length) {
+                break;
+              }
+            }
+          }
+
+          return results;
         }
 
         //creates cache key based on type string
