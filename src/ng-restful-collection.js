@@ -93,7 +93,7 @@
           if (!single) {
             angular.extend(requestParams, self._meta.params);
           } else {
-            var localEntity = findByIds(self.data.collection, [ requestParams[options.idKey] ])[0];
+            var localEntity = findById(self.data.collection, requestParams[options.idKey]);
 
             if (localEntity) {
               return $q.resolve(angular.copy(localEntity));
@@ -114,7 +114,10 @@
                 insertIntoCollection(self.data.collection, data);
                 promisedValue = angular.copy(data);
               } else {
-                self.data.collection = data[options.collectionKey] || [];
+                var respCollection = data[options.collectionKey];
+                for (var i = 0, length = respCollection.length; i < length; i++) {
+                  insertIntoCollection(self.data.collection, respCollection[i]);                  
+                }
                 promisedValue = angular.copy(self.data.collection);
               }
               return promisedValue;
@@ -172,7 +175,7 @@
               //time has passed since the network request has been made
               //and the data may have changed which means that the original
               //no longer exists in the current collection
-              var original = findByIds(self.data.collection, [ entity[options.idKey] ])[0],
+              var original = findById(self.data.collection, entity[options.idKey]),
                 index = self.data.collection.indexOf(original);
               self.data.collection.splice(index, 1);
             }, quickReject);
@@ -183,8 +186,6 @@
           self.data.collection = [];
           $rootScope.$emit('$collection:clear-local', self);
         };
-
-
 
         function quickReject(err) {
           return $q.reject(err);
@@ -198,31 +199,26 @@
         //extending currently existing entity in the collection
         //or pushing the entity into the colleciton if it does not exist
         function insertIntoCollection(collection, entity) {
-          var original = findByIds(collection, [ entity[options.idKey] ])[0];
+          var original = findById(collection, entity[options.idKey]);
           if (original) {
             angular.extend(original, entity);
-          } else { 
+          } else {
             collection.push(entity);
           }
         }
 
         //helper for finding first entity in a collection by id
-        //however this is suboptimal
-        function findByIds(collection, ids) {
+        function findById(collection, id) {
           var results = [],
-            idsLength = ids.length,
             idKey = options.idKey;
 
           for (var i = 0, length = collection.length; i < length; i++) {
-            if (ids.indexOf(collection[i][idKey]) !== -1) {
-              results.push(collection[i]);
-              if (idsLength === results.length) {
-                break;
-              }
+            if (collection[i][idKey] === id) {
+              return collection[i];
             }
           }
 
-          return results;
+          return null;
         }
 
         //creates cache key based on type string
