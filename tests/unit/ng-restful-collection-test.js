@@ -9,7 +9,9 @@ describe('$collection', function () {
   beforeEach(module(function($provide) {
     $provide.factory('$resourceLibrary', function($q) {
       return {
-        get: jasmine.createSpy('get').and.returnValue('a')
+        get: jasmine.createSpy('get').and.returnValue('a'),
+        getWithPrefix: jasmine.createSpy('getWithPrefix').and.returnValue([]),
+        extend: jasmine.createSpy('extend')
       };
     });
   }));

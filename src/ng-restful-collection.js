@@ -11,6 +11,7 @@
     .provider('$collection', function() {
       var defaults = this.defaults = {
         preRequest: null,
+        relsKey: null,
         collectionKey: 'data',
         idKey: 'id'
       };
@@ -112,11 +113,14 @@
                 data = resp.data;
               if(single) {
                 insertIntoCollection(self.data.collection, data);
+                $resourceLibrary.extend(data[options.relsKey], self._meta.type + '[' + data[options.idKey] + ']');
                 promisedValue = angular.copy(data);
               } else {
                 var respCollection = data[options.collectionKey];
                 for (var i = 0, length = respCollection.length; i < length; i++) {
-                  insertIntoCollection(self.data.collection, respCollection[i]);                  
+                  var entity = respCollection[i];
+                  insertIntoCollection(self.data.collection, entity);
+                  $resourceLibrary.extend(entity[options.relsKey], self._meta.type + '[' + entity[options.idKey] + ']');
                 }
                 promisedValue = angular.copy(self.data.collection);
               }
@@ -147,8 +151,10 @@
               return $http[method](url, entity);
             }, quickReject)
             .then(function(resp) {
-              insertIntoCollection(self.data.collection, resp.data);
-              return angular.copy(resp.data);
+              entity = resp.data;
+              insertIntoCollection(self.data.collection, entity);
+              $resourceLibrary.extend(entity[options.relsKey], self._meta.type + '[' + entity[options.idKey] + ']');
+              return angular.copy(entity);
             }, quickReject);
         };
 
@@ -164,7 +170,8 @@
          * @param {Object} The entity to be removed.
          **/
         Collection.prototype.remove = function(entity) {
-          var self = this;
+          var self = this,
+            id = entity[options.idKey];
 
           return preRequest.run()
             .then(function() {
@@ -175,9 +182,14 @@
               //time has passed since the network request has been made
               //and the data may have changed which means that the original
               //no longer exists in the current collection
-              var original = findById(self.data.collection, entity[options.idKey]),
-                index = self.data.collection.indexOf(original);
+              var original = findById(self.data.collection, id),
+                index = self.data.collection.indexOf(original),
+                entityRels = $resourceLibrary.getWithPrefix(self._meta.type + '[' + id + ']');
               self.data.collection.splice(index, 1);
+
+              for (var i = 0, length = entityRels.length; i < length; i++) {
+                $collection(entityRels[i]).clearLocal();
+              }
             }, quickReject);
         };
 
@@ -231,7 +243,8 @@
           return args[0] + params;
         }
 
-        return function(type, params) {
+
+        function getCollection(type, params) {
           var key = getCacheKey(arguments),
             inCache = cache.get(key);
 
@@ -242,7 +255,9 @@
           var collection = new Collection(type, params);
           cache.put(key, collection);
           return collection;
-        };
+        }
+
+        return getCollection;
       };
     })
     /**
@@ -265,9 +280,9 @@
        *
        * This service is to be extended to better take advantage HATEOAS.
        * */
-      this.$get = function($cacheFactory) {
+      this.$get = function() {
         var options = angular.copy(defaults),
-          cache = $cacheFactory('resource-library');
+          links = {};
 
         extend(options.baseLinks);
 
@@ -276,18 +291,32 @@
 
           if (angular.isArray(rels)) {
             angular.forEach(rels, function(value) {
-              cache.put(base + value.rel, value.uri);
+              links[base + value.rel] = value.uri;
             });     
           } else if (angular.isObject(rels)) {
             angular.forEach(rels, function(value, key) {
-              cache.put(base + key, value);
+              links[base + key] = value;
             });
           }
         }
 
         return {
           extend: extend,
-          get: cache.get
+          get: function(key) {
+            return links[key];
+          },
+          getWithPrefix: function(prefix) {
+            var keys = Object.keys(links),
+              results = [];
+
+            for (var i = 0, length = keys.length; i < length; i++) {
+              if (keys[i].indexOf(prefix) === 0) {
+                results.push(links[keys[i]]);
+              }
+            }
+
+            return results;
+          }
         };
       };
     })
