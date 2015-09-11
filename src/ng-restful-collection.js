@@ -184,7 +184,7 @@
               //no longer exists in the current collection
               var original = findById(self.data.collection, id),
                 index = self.data.collection.indexOf(original),
-                entityRels = $resourceLibrary.getWithPrefix(self._meta.type + '[' + id + ']');
+                entityRels = $resourceLibrary.getAll(self._meta.type + '[' + id + ']');
               self.data.collection.splice(index, 1);
 
               for (var i = 0, length = entityRels.length; i < length; i++) {
@@ -300,23 +300,38 @@
           }
         }
 
+        function get(key) {
+          return links[key];
+        }
+
+        function getAll(key) {
+          var keys = Object.keys(links),
+            results = [],
+            iteratee;
+
+          if (angular.isString(key)) {
+            return [ get(key) ];
+          } else if (angular.isFunction(key)) {
+            iteratee = key;
+          } else if (angular.isFunction(key.test)) {
+            iteratee = function(keyValue) {
+              return key.test(keyValue);
+            };
+          }
+
+          for (var i = 0, length = keys.length; i < length; i++) {
+            if (iteratee(keys[i])) {
+              results.push(links[keys[i]]);
+            }
+          }
+
+          return results;
+        }
+
         return {
           extend: extend,
-          get: function(key) {
-            return links[key];
-          },
-          getWithPrefix: function(prefix) {
-            var keys = Object.keys(links),
-              results = [];
-
-            for (var i = 0, length = keys.length; i < length; i++) {
-              if (keys[i].indexOf(prefix) === 0) {
-                results.push(links[keys[i]]);
-              }
-            }
-
-            return results;
-          }
+          get: get,
+          getAll: getAll
         };
       };
     })

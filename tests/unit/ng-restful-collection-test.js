@@ -10,7 +10,7 @@ describe('$collection', function () {
     $provide.factory('$resourceLibrary', function($q) {
       return {
         get: jasmine.createSpy('get').and.returnValue('a'),
-        getWithPrefix: jasmine.createSpy('getWithPrefix').and.returnValue([]),
+        getAll: jasmine.createSpy('getAll').and.returnValue([]),
         extend: jasmine.createSpy('extend')
       };
     });
@@ -184,6 +184,24 @@ describe('$resourceLibrary', function () {
   it('should get a resource for a given key', function() {
     $resourceLibrary.extend({ key: 'value' });
     expect($resourceLibrary.get('key')).toEqual('value');
+  });
+
+  it('should get all with string param', function() {
+    $resourceLibrary.extend({ key0: 'value0', key1: 'value1' });
+    expect($resourceLibrary.getAll('key0')).toEqual([ 'value0' ]);
+  });
+
+  it('should get all with function param', function() {
+    $resourceLibrary.extend({ key0: 'value0', key1: 'value1', key2: 'value2' });
+
+    expect($resourceLibrary.getAll(function(key) {
+      return key[3] < 2;
+    })).toEqual([ 'value0', 'value1' ]);
+  });
+
+  it('should get all with regexp param', function() {
+    $resourceLibrary.extend({ key0: 'value0', key1: 'value1', key2: 'value2' });
+    expect($resourceLibrary.getAll(/k/)).toEqual([ 'value0', 'value1', 'value2' ]);
   });
 
   it('should accept an object for extending the resources library', function() {
