@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/onumossn/ng-restful-collection#readme",
   "dependencies": {
-    "angular": "^1.3.0"
+    "angular": "^1.4.0"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
@@ -48,7 +48,7 @@
     "karma-firefox-launcher": "^0.1.6",
     "karma-jasmine": "^0.3.6",
     "karma-phantomjs-launcher": "^0.2.1",
-    "phantomjs": "^1.9.18",
+    "phantomjs": "^2.0.0",
     "time-grunt": "^1.2.1"
   }
 }
