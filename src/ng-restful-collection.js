@@ -53,11 +53,11 @@
            * Contains information concerning the collection requests.
            * It is meant to be private.
            */
-          this._meta = {
+          this._meta = angular.extend({
             type: type,
-            url: $resourceLibrary.get(type),
-            params: angular.copy(params)          
-          };
+            params: angular.copy(params),
+            configs: {}
+          }, $resourceLibrary.getConfig(type));
 
           /**
            * @ngdoc property
@@ -88,7 +88,7 @@
           var self = this,
             requestParams = angular.copy(params || {}),
             single = !!requestParams[options.idKey],
-            url = self._meta.url;
+            url = self._meta.uri;
           
           if (!single) {
             angular.extend(requestParams, self._meta.params);
@@ -99,13 +99,13 @@
               return $q.resolve(angular.copy(localEntity));
             }
 
-            url = getEntityUrl(self._meta.url, requestParams[options.idKey]);
+            url = getEntityUrl(self._meta.uri, requestParams[options.idKey]);
             delete requestParams[options.idKey];
           }
 
           return preRequest.run()
             .then(function() {
-              return $http.get(url, { params: requestParams });
+              return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get));
             }, quickReject)
             .then(function(resp) {
               var promisedValue,
@@ -132,16 +132,23 @@
          * If the `entity` contains a truthy `id` property, that is used to perform a PUT.
          * Otherwise, it will perform a POST.
          *
-         * @param {Object} entity The entity to be saved.
+         * @param {Object|function} entity The entity or a function that returns the entity to be saved.
          **/
         Collection.prototype.save = function(entity) {
           var self = this,
-            url = entity[options.idKey] ?
-              getEntityUrl(self._meta.url, entity[options.idKey]) : self._meta.url;
+            url;
+
+          if (typeof entity === 'function') {
+            entity = entity();
+          }
+
+          url = entity[options.idKey] ?
+              getEntityUrl(self._meta.uri, entity[options.idKey]) : self._meta.uri;
+
           return preRequest.run()
             .then(function() {
               var method = entity[options.idKey] ? 'put' : 'post';
-              return $http[method](url, entity);
+              return $http[method](url, entity, self._meta.configs[method]);
             }, quickReject)
             .then(function(resp) {
               insertIntoCollection(self.data.collection, resp.data);
@@ -165,7 +172,7 @@
 
           return preRequest.run()
             .then(function() {
-              return $http.delete(getEntityUrl(self._meta.url, entity[options.idKey]));
+              return $http.delete(getEntityUrl(self._meta.uri, entity[options.idKey]), self._meta.configs.delete);
             }, quickReject)
             .then(function() {
               //seems weird to find something you already have, but
@@ -183,8 +190,6 @@
           self.data.collection = [];
           $rootScope.$emit('$collection:clear-local', self);
         };
-
-
 
         function quickReject(err) {
           return $q.reject(err);
@@ -274,18 +279,28 @@
 
           if (angular.isArray(rels)) {
             angular.forEach(rels, function(value) {
-              cache.put(base + value.rel, value.uri);
+              cache.put(base + value.rel, value);
             });     
           } else if (angular.isObject(rels)) {
             angular.forEach(rels, function(value, key) {
+              if (angular.isString(value)) {
+                value = { uri: value };
+              }
+
+              if (value.configs && value.configs.common) {
+                angular.forEach(value.configs, function(config, configKey) {
+                  value.configs[configKey] = angular.extend({}, value.config.common, config);
+                });
+              }
+
               cache.put(base + key, value);
             });
           }
         }
-
         return {
           extend: extend,
-          get: cache.get
+          get: function() { return cache.get.apply(this, arguments).uri; },
+          getConfig: cache.get
         };
       };
     })

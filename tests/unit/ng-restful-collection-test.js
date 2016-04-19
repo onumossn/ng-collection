@@ -9,7 +9,8 @@ describe('$collection', function () {
   beforeEach(module(function($provide) {
     $provide.factory('$resourceLibrary', function($q) {
       return {
-        get: jasmine.createSpy('get').and.returnValue('a')
+        get: jasmine.createSpy('getConfig').and.returnValue('a'),
+        getConfig: jasmine.createSpy('getConfig').and.returnValue({ uri: 'a' })
       };
     });
   }));
