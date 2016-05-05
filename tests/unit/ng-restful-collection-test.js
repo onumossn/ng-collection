@@ -289,7 +289,7 @@ describe('ngRestfulCollectionCtrl', function () {
       $scope.$digest();
       expect(collection.remove).toHaveBeenCalledWith(entity);
 
-      $scope.aSDF.refresh();
+      $scope.aSDF.refresh(null, null, true);
       $scope.$digest();
       expect(collection.clearLocal).toHaveBeenCalledWith();
       expect(collection.get).toHaveBeenCalledWith();

@@ -343,8 +343,10 @@
             return resource.remove(entity)
               .then(getCallbackHandler(success), getCallbackHandler(error));
           },
-          refresh: function(success, error) {
-            resource.clearLocal();
+          refresh: function(success, error, clearLocal) {
+            if (clearLocal) {
+              resource.clearLocal();
+            }
             return resource.get()
               .then(getCallbackHandler(success), getCallbackHandler(error));
           }
