@@ -10,7 +10,6 @@
      * */
     .provider('$collection', function() {
       var defaults = this.defaults = {
-        preRequest: null,
         collectionKey: 'data',
         idKey: 'id'
       };
@@ -38,13 +37,9 @@
        *  This is, also, used to uniquely identify a collection.
        **/
       this.$get = function($q, $http, $filter, $cacheFactory, $injector, $rootScope, $resourceLibrary) {
-        var cache = $cacheFactory('ng-restful-collection'),
-          options = angular.copy(defaults),
-          preRequest = preRequest ? $injector.get(preRequest) : {
-            run: function() { return $q.when(true); }
-          };
+        var cache = $cacheFactory('ng-restful-collection');
 
-        function Collection(type, params) {
+        function Collection(type, params, options) {
           /**
            * @ngdoc property
            * @name $colletion.Collection#_meta
@@ -53,11 +48,16 @@
            * Contains information concerning the collection requests.
            * It is meant to be private.
            */
-          this._meta = angular.extend({
-            type: type,
-            params: angular.copy(params),
-            configs: {}
-          }, $resourceLibrary.getConfig(type));
+          this._meta = angular.extend({},
+            defaults,
+            $resourceLibrary.getConfig(type),
+            {
+              type: type,
+              params: angular.copy(params)
+            },
+            options);
+
+          this._meta.configs = this._meta.configs || {};
 
           /**
            * @ngdoc property
@@ -87,34 +87,31 @@
         Collection.prototype.get = function(params) {
           var self = this,
             requestParams = angular.copy(params || {}),
-            single = !!requestParams[options.idKey],
-            url = self._meta.uri;
+            single = !!requestParams[self._meta.idKey],
+            url = self._meta.getURI(self._meta, requestParams);
           
-          if (!single) {
-            angular.extend(requestParams, self._meta.params);
-          } else {
-            var localEntity = findById(self.data.collection, requestParams[options.idKey]);
+          if (single) {
+            var localEntity = self._findById(requestParams[self._meta.idKey]);
 
             if (localEntity) {
               return $q.resolve(angular.copy(localEntity));
             }
 
-            url = getEntityUrl(self._meta.uri, requestParams[options.idKey]);
-            delete requestParams[options.idKey];
+            url = getEntityUrl(url, requestParams[self._meta.idKey]);
+            delete requestParams[self._meta.idKey];
+          } else {
+            angular.extend(requestParams, self._meta.params);
           }
 
-          return preRequest.run()
-            .then(function() {
-              return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get));
-            }, quickReject)
+          return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get))
             .then(function(resp) {
               var promisedValue,
                 data = resp.data;
               if(single) {
-                insertIntoCollection(self.data.collection, data);
+                self._insertIntoCollection(data);
                 promisedValue = angular.copy(data);
               } else {
-                self.data.collection = data[options.collectionKey] || [];
+                self.data.collection = data[self._meta.collectionKey] || [];
                 promisedValue = angular.copy(self.data.collection);
               }
               return promisedValue;
@@ -132,26 +129,21 @@
          * If the `entity` contains a truthy `id` property, that is used to perform a PUT.
          * Otherwise, it will perform a POST.
          *
-         * @param {Object|function} entity The entity or a function that returns the entity to be saved.
+         * @param {Object} entity The entity or a function that returns the entity to be saved.
          **/
         Collection.prototype.save = function(entity) {
           var self = this,
-            url;
+            url = self._meta.getURI(self._meta, {}, entity),
+            method;
 
-          if (typeof entity === 'function') {
-            entity = entity();
+          if (entity[self._meta.idKey]) {
+            url = getEntityUrl(url, entity[self._meta.idKey]);
           }
 
-          url = entity[options.idKey] ?
-              getEntityUrl(self._meta.uri, entity[options.idKey]) : self._meta.uri;
-
-          return preRequest.run()
-            .then(function() {
-              var method = entity[options.idKey] ? 'put' : 'post';
-              return $http[method](url, entity, self._meta.configs[method]);
-            }, quickReject)
+          method = entity[self._meta.idKey] ? 'put' : 'post';
+          return $http[method](url, entity, self._meta.configs[method])
             .then(function(resp) {
-              insertIntoCollection(self.data.collection, resp.data);
+              self._insertIntoCollection(resp.data);
               return angular.copy(resp.data);
             }, quickReject);
         };
@@ -168,18 +160,16 @@
          * @param {Object} The entity to be removed.
          **/
         Collection.prototype.remove = function(entity) {
-          var self = this;
+          var self = this,
+            url = self._meta.getURI(self._meta, {}, entity);
 
-          return preRequest.run()
-            .then(function() {
-              return $http.delete(getEntityUrl(self._meta.uri, entity[options.idKey]), self._meta.configs.delete);
-            }, quickReject)
+          return $http.delete(getEntityUrl(url, entity[self._meta.idKey]), self._meta.configs.delete)
             .then(function() {
               //seems weird to find something you already have, but
               //time has passed since the network request has been made
               //and the data may have changed which means that the original
               //no longer exists in the current collection
-              var original = findById(self.data.collection, entity[options.idKey]),
+              var original = self._findById(entity[self._meta.idKey]),
                 index = self.data.collection.indexOf(original);
               self.data.collection.splice(index, 1);
             }, quickReject);
@@ -191,24 +181,33 @@
           $rootScope.$emit('$collection:clear-local', self);
         };
 
+
+        //helper to insert entity into collection by either
+        //extending currently existing entity in the collection
+        //or pushing the entity into the colleciton if it does not exist
+        Collection.prototype._insertIntoCollection = function(entity) {
+          var self = this;
+          var original = self._findById(entity[self._meta.idKey]);
+          if (original) {
+            angular.extend(original, entity);
+          } else { 
+            self.data.collection.push(entity);
+          }
+        };
+
+        //helper for finding first entity in a collection by id
+        //however this is suboptimal
+        Collection.prototype._findById = function(id) {
+          var self = this;
+          return $filter('filter')(self.data.collection, getDynamicKeyObject(self._meta.idKey, id))[0];
+        };
+
         function quickReject(err) {
           return $q.reject(err);
         }
 
         function getEntityUrl(url, id) {
           return url + '/' + id;
-        }
-
-        //helper to insert entity into collection by either
-        //extending currently existing entity in the collection
-        //or pushing the entity into the colleciton if it does not exist
-        function insertIntoCollection(collection, entity) {
-          var original = findById(collection, entity[options.idKey]);
-          if (original) {
-            angular.extend(original, entity);
-          } else { 
-            collection.push(entity);
-          }
         }
 
         //helper for creating an object with a dynamic key value pair
@@ -218,23 +217,23 @@
           return obj;
         }
 
-        //helper for finding first entity in a collection by id
-        //however this is suboptimal
-        function findById(collection, id) {
-          return $filter('filter')(collection, getDynamicKeyObject(options.idKey, id))[0];
-        }
-
         //creates cache key based on type string
         //and params object converted into a string
         function getCacheKey(args) {
-          var params = '';
-          angular.forEach(args[1], function(value, key) {
-            params += (key + value);
-          });
-          return args[0] + params;
+          var cacheKey = args[0];
+
+          if (args[1]) {
+            cacheKey += angular.toJson(args[1]);
+          }
+
+          if (args[2]) {
+            cacheKey += angular.toJson(args[2]);
+          }
+
+          return cacheKey;
         }
 
-        return function(type, params) {
+        return function(type, params, options) {
           var key = getCacheKey(arguments),
             inCache = cache.get(key);
 
@@ -242,7 +241,7 @@
             return inCache;
           }
           
-          var collection = new Collection(type, params);
+          var collection = new Collection(type, params, options);
           cache.put(key, collection);
           return collection;
         };
@@ -279,24 +278,32 @@
 
           if (angular.isArray(rels)) {
             angular.forEach(rels, function(value) {
-              cache.put(base + value.rel, value);
+              cache.put(base + value.rel, buildRel(value));
             });     
           } else if (angular.isObject(rels)) {
             angular.forEach(rels, function(value, key) {
-              if (angular.isString(value)) {
-                value = { uri: value };
-              }
-
-              if (value.configs && value.configs.common) {
-                angular.forEach(value.configs, function(config, configKey) {
-                  value.configs[configKey] = angular.extend({}, value.config.common, config);
-                });
-              }
-
-              cache.put(base + key, value);
+              cache.put(base + key, buildRel(value));
             });
           }
         }
+
+        function buildRel(rel) {
+          if (angular.isString(rel)) {
+            rel = { uri: rel };
+          }
+
+          if (rel.configs && rel.configs.common) {
+            angular.forEach(rel.configs, function(config, configKey) {
+              rel.configs[configKey] = angular.extend({}, rel.config.common, config);
+            });
+          }
+
+          rel.getURI = angular.isFunction(rel.uri) ?
+            rel.uri : function() { return rel.uri; };
+
+          return rel;
+        }
+
         return {
           extend: extend,
           get: function() { return cache.get.apply(this, arguments).uri; },
@@ -323,7 +330,7 @@
       $scope.getEditCopy = angular.copy;
 
       angular.forEach(collections, function(collection) {
-        var resource = $collection(collection.type, collection.params),
+        var resource = $collection(collection.type, collection.params, collection.option),
           collectionName = camelCase(collection.type);
 
         $scope[collectionName] = angular.extend({

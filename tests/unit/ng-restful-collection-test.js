@@ -10,7 +10,7 @@ describe('$collection', function () {
     $provide.factory('$resourceLibrary', function($q) {
       return {
         get: jasmine.createSpy('getConfig').and.returnValue('a'),
-        getConfig: jasmine.createSpy('getConfig').and.returnValue({ uri: 'a' })
+        getConfig: jasmine.createSpy('getConfig').and.returnValue({ uri: 'a', getURI: function() { return 'a' } })
       };
     });
   }));
