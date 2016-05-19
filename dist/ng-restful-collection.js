@@ -365,7 +365,7 @@
 
       function getCallbackHandler(callback) {
         return function(resp) {
-          if (callback) {
+          if (angular.isFunction(callback)) {
             callback(resp);
           }
         };
