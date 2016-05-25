@@ -59,6 +59,10 @@
 
           this._meta.configs = this._meta.configs || {};
 
+          if (options && options.cache) {
+            this._meta.cache = $cacheFactory(options.cache.name || angular.toJson(this._meta), options.cache);
+          }
+
           /**
            * @ngdoc property
            * @name $colletion.Collection#data
@@ -84,11 +88,12 @@
          * @param {Object} params Additional params to use in the specific request.
          *  If the `id` property is given, it is used as a path param instead of a query param. 
          **/
-        Collection.prototype.get = function(params) {
+        Collection.prototype.get = function(params, skipCache) {
           var self = this,
             requestParams = angular.copy(params || {}),
             single = !!requestParams[self._meta.idKey],
-            url = self._meta.getURI(self._meta, requestParams);
+            url = self._meta.getURI(self._meta, requestParams),
+            cache = skipCache ? null : this._meta.cache;
           
           if (single) {
             var localEntity = self._findById(requestParams[self._meta.idKey]);
@@ -103,7 +108,7 @@
             angular.extend(requestParams, self._meta.params);
           }
 
-          return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get))
+          return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get, cache))
             .then(function(resp) {
               var promisedValue,
                 data = resp.data;
@@ -294,7 +299,7 @@
 
           if (rel.configs && rel.configs.common) {
             angular.forEach(rel.configs, function(config, configKey) {
-              rel.configs[configKey] = angular.extend({}, rel.config.common, config);
+              rel.configs[configKey] = angular.extend({}, rel.configs.common, config);
             });
           }
 
@@ -351,8 +356,7 @@
               .then(getCallbackHandler(success), getCallbackHandler(error));
           }
         }, $scope[collectionName]);
-
-        resource.get();
+        resource.get({}, collection.option && collection.option.skipCache);
       });
 
       //helper incomplete camelCase
