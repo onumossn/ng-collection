@@ -38,6 +38,7 @@
        **/
       this.$get = ['$q', '$http', '$filter', '$cacheFactory', '$injector', '$rootScope', '$resourceLibrary', function($q, $http, $filter, $cacheFactory, $injector, $rootScope, $resourceLibrary) {
         var cache = $cacheFactory('ng-restful-collection');
+        var instances = {};
 
         function Collection(type, params, options) {
           /**
@@ -48,6 +49,8 @@
            * Contains information concerning the collection requests.
            * It is meant to be private.
            */
+          var sharedType;
+
           this._meta = angular.extend({},
             defaults,
             $resourceLibrary.getConfig(type),
@@ -62,6 +65,16 @@
           if (options && options.cache) {
             this._meta.cache = $cacheFactory(options.cache.name || angular.toJson(this._meta), options.cache);
           }
+
+          sharedType = angular.isFunction(this._meta.sharedType) ? this._meta.sharedType(options) : (sharedType || type);
+
+          if (!instances[sharedType]) {
+            instances[sharedType] = [];
+          }
+
+          instances[sharedType].push(this);
+
+          this._meta.instances = instances[sharedType];
 
           /**
            * @ngdoc property
@@ -88,18 +101,20 @@
          * @param {Object} params Additional params to use in the specific request.
          *  If the `id` property is given, it is used as a path param instead of a query param. 
          **/
-        Collection.prototype.get = function(params, skipCache) {
+        Collection.prototype.get = function(params, skipCache, skipLocalUpdate) {
           var self = this,
             requestParams = angular.copy(params || {}),
             single = !!requestParams[self._meta.idKey],
             url = self._meta.getURI(self._meta, requestParams),
-            cache = skipCache ? null : this._meta.cache;
+            cache = skipCache ? null : this._meta.cache,
+            fromCache,
+            config;
           
           if (single) {
             var localEntity = self._findById(requestParams[self._meta.idKey]);
 
             if (localEntity) {
-              return $q.resolve(angular.copy(localEntity));
+              return $q.resolve(localEntity);
             }
 
             url = getEntityUrl(url, requestParams[self._meta.idKey]);
@@ -108,16 +123,36 @@
             angular.extend(requestParams, self._meta.params);
           }
 
-          return $http.get(url, angular.extend({ params: requestParams }, self._meta.configs.get, cache))
+          config = angular.extend({ params: requestParams }, self._meta.configs.get);
+
+          if (cache) {
+            fromCache = $q.resolve(cache.get(url + angular.toJson(config)));
+            if (fromCache) {
+              return fromCache;
+            }
+          }
+
+          return $http.get(url, config)
             .then(function(resp) {
               var promisedValue,
                 data = resp.data;
               if(single) {
                 self._insertIntoCollection(data);
-                promisedValue = angular.copy(data);
+                promisedValue = data;
+              } else if (skipLocalUpdate) {
+                promisedValue = data[self._meta.collectionKey];
               } else {
                 self.data.collection = data[self._meta.collectionKey] || [];
-                promisedValue = angular.copy(self.data.collection);
+                promisedValue = self.data.collection;
+              }
+
+              promisedValue = angular.copy(promisedValue);
+
+              if (cache && !single) {
+                // no need to keep redundant copy of single items
+                // it already uses this.data.collection as a cache for
+                // single items and that cahce seems more effective
+                cache.put(url + angular.toJson(config), promisedValue);
               }
               return promisedValue;
             }, quickReject);
@@ -148,7 +183,8 @@
           method = entity[self._meta.idKey] ? 'put' : 'post';
           return $http[method](url, entity, self._meta.configs[method])
             .then(function(resp) {
-              self._insertIntoCollection(resp.data);
+              var ret = self._insertIntoCollection(resp.data);
+              $rootScope.$emit('collection:save', self, ret.new, ret.original || {}, entity, self._meta.instances);
               return angular.copy(resp.data);
             }, quickReject);
         };
@@ -174,9 +210,7 @@
               //time has passed since the network request has been made
               //and the data may have changed which means that the original
               //no longer exists in the current collection
-              var original = self._findById(entity[self._meta.idKey]),
-                index = self.data.collection.indexOf(original);
-              self.data.collection.splice(index, 1);
+              self._removeFromCollection(entity);
             }, quickReject);
         };
 
@@ -186,6 +220,12 @@
           $rootScope.$emit('$collection:clear-local', self);
         };
 
+        Collection.prototype._removeFromCollection = function(entity) {
+          var original = this._findById(entity[this._meta.idKey]),
+            index = this.data.collection.indexOf(original);
+          this.data.collection.splice(index, 1);
+          return entity;
+        };
 
         //helper to insert entity into collection by either
         //extending currently existing entity in the collection
@@ -193,11 +233,17 @@
         Collection.prototype._insertIntoCollection = function(entity) {
           var self = this;
           var original = self._findById(entity[self._meta.idKey]);
+          var originalCopy = angular.copy(original);
           if (original) {
-            angular.extend(original, entity);
+            entity = angular.extend(original, entity);
           } else { 
             self.data.collection.push(entity);
           }
+
+          return {
+            original: originalCopy,
+            new: entity
+          };
         };
 
         //helper for finding first entity in a collection by id
